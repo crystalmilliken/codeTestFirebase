@@ -47,6 +47,7 @@
             let currentUser = "";  
             let cardaId = null;
             let cardbId = null;
+            let cardObjects = null;
             let cardData = firebase.database().ref("Cards");
             let userRef = firebase.database().ref("Users");
             let turnRef = firebase.database().ref("Turn");
@@ -133,7 +134,6 @@
                 checkScore();
             }else if(currentUser=="Red"){
                 redScore++;
-                console.log(userObjects)
                 userRef.update({
                     Red:{Score: redScore}
                 });
@@ -157,7 +157,6 @@
                 cardaId = currentCardId;
                 cardObjects.map((a)=>{
                     Object.keys(a).forEach((prop)=>{
-                        console.log(carda + "a.name is:" + a.name)
                         if(a.name == carda){
                             document.getElementById(cardaId).style.backgroundColor = a.backGround;
                         } 
