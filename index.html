@@ -1,0 +1,206 @@
+<html>
+    <head>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    </head>
+    <body>
+        <div>
+        <div class="container">
+            <h3>Who's turn?</h3>
+            <div id="currentTurn"></div>
+        </div> 
+        <div class="container"><h3>Score</h2>
+        <div id="user1" style="color:#2529c7">Blue score is </div>
+        <div id="user2" style="color:#fe0018">Red score is </div>
+        </div>
+        <!--Below will be the div where the cards are populated-->
+        <div id="namelist" class="container"></div>
+        <button onclick="reset()">Start Over</button>
+        </div>
+        <script src="https://www.gstatic.com/firebasejs/4.3.0/firebase.js"></script>
+        <script>
+        // Initialize Firebase
+        var config = {
+            apiKey: "xxxxxxxxYourAppKey",
+            authDomain: "codetest-b48c9.firebaseapp.com",
+            databaseURL: "https://codetest-b48c9.firebaseio.com",
+            projectId: "codetest-b48c9",
+            storageBucket: "codetest-b48c9.appspot.com",
+            messagingSenderId: "1042362811611"
+        };
+        firebase.initializeApp(config);
+        </script>
+        <script
+            src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous">
+        </script>
+        <script>
+            let arrayOfCards = [];
+            let totalAmountOfCards = [];
+            let blueScore = 0;
+            let redScore = 0;
+            let currentTurn = null;
+            let userObjects = null;
+            let idNum = 0;
+            let carda = "";
+            let cardb = "";
+            let currentUser = "";  
+            let cardaId = null;
+            let cardbId = null;
+            let cardData = firebase.database().ref("Cards");
+            let userRef = firebase.database().ref("Users");
+            let turnRef = firebase.database().ref("Turn");
+                userRef.on('value', function(snapshot) {
+                userObjects = snapshot.val();
+                blueScore = userObjects.Blue.Score;
+                redScore =userObjects.Red.Score;
+                document.getElementById("user1").innerHTML = `Blue score is ${blueScore}`;
+                document.getElementById("user2").innerHTML = `Red score is ${redScore}`;
+                });  
+                turnRef.on('value', function(snapshot){
+                    turnObject = snapshot.val();
+                    currentTurn = turnObject.value;
+                    currentUser =currentTurn;
+                    document.getElementById("currentTurn").innerHTML = currentTurn;
+                   
+                })   
+                //This is accessing the card array from a firebase database
+                cardData.on('value', function(snapshot){
+                    cardObjects = snapshot.val();  
+                    shuffleArray(cardObjects)        
+                        cardObjects.map((a)=>{
+                            idNum++;
+                        document.getElementById("namelist").innerHTML += `<div class="col-sm-2" id=${idNum} name=${a.name}
+                        style="background-color: pink; min-Height:4em;min-Width:4em;margin:2px"
+                        onClick=chooseCard()>Pick Me</div>`;
+                        })
+                       document.getElementById("currentTurn").innerHTML = currentTurn;
+                })   
+        function reset(){
+            userRef.update({
+                Blue:{Score: 0},
+                Red:{Score: 0}
+            });
+        }  
+        //Below function takes an array and shuffles it so that every time the page is reloaded you get a different game
+        function shuffleArray(array){
+            for (var i = array.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
+        }
+        function checkScore(){
+            if(redScore + blueScore == 10){
+                                if(blueScore > redScore){
+                                    alert("That's it, Blue won!");
+                                    userRef.update({
+                                    Blue:{Score: 0},
+                                    Red:{Score: 0}
+                                });
+                                    location.reload();
+                                }else if (blueScore == redScore){
+                                    alert("That's it, tie!");
+                                     userRef.update({
+                                    Blue:{Score: 0},
+                                    Red:{Score: 0}
+                                });
+                                    location.reload();
+                                }else{
+                                    alert("That's it, Red won!");
+                                     userRef.update({
+                                    Blue:{Score: 0},
+                                    Red:{Score: 0}
+                                });
+                                    location.reload();
+                                }
+                            }
+        }
+        function changeDom(){
+            if(currentUser == "Blue"){
+                blueScore++;
+                userRef.update({
+                    Blue:{Score: blueScore}
+                });
+                document.getElementById("user1").innerHTML = `Blue score is ${blueScore}`;
+                document.getElementById(cardaId).innerHTML = "Blue's match";
+                document.getElementById(cardbId).innerHTML = "Blue's match";
+                turnRef.set({
+                    value: "Red",
+                });
+                document.getElementById("currentTurn").innerHTML = currentTurn;
+                checkScore();
+            }else if(currentUser=="Red"){
+                redScore++;
+                console.log(userObjects)
+                userRef.update({
+                    Red:{Score: redScore}
+                });
+                document.getElementById("user2").innerHTML = `Red score is ${redScore}`;
+                document.getElementById(cardaId).innerHTML = "Red's match";
+                document.getElementById(cardbId).innerHTML = "Red's match";
+                turnRef.set({
+                    value: "Blue",
+                });
+                document.getElementById("currentTurn").innerHTML = currentTurn;
+                checkScore();
+            }
+        }
+        //The below function is called when a card is clicked on.
+        function chooseCard(){
+            let currentCardId = event.target.id;
+            let currentCard = document.getElementById(currentCardId).getAttribute('name');
+           //check to see if there is already a card picked. If not, it's assigned
+            if(carda == ""){
+                carda = currentCard;
+                cardaId = currentCardId;
+                cardObjects.map((a)=>{
+                    Object.keys(a).forEach((prop)=>{
+                        console.log(carda + "a.name is:" + a.name)
+                        if(a.name == carda){
+                            document.getElementById(cardaId).style.backgroundColor = a.backGround;
+                        } 
+                    })
+                });
+            }else if(carda != "" && cardb == ""){
+                cardb = currentCard;
+                cardbId = currentCardId;  
+                cardObjects.map((a)=>{
+                    Object.keys(a).forEach((prop)=>{
+                        if(a.name == cardb){
+                            document.getElementById(cardbId).style.backgroundColor = a.backGround;
+                        } 
+                    })
+                })
+                if(carda == cardb){
+                    carda = "";
+                    cardb = "";
+                    changeDom();
+                }else if(carda != cardb){
+                    setTimeout(function () {
+                        carda = "";
+                        cardb = "";
+                        if(currentUser == "Blue"){
+                            turnRef.set({
+                                value: "Red",
+                                });
+                            document.getElementById("currentTurn").innerHTML = currentTurn;
+                        }else if (currentUser == "Red"){
+                            turnRef.set({
+                                value: "Blue",
+                            });
+                            document.getElementById("currentTurn").innerHTML = currentTurn;
+                        }
+                        document.getElementById(cardbId).style.backgroundColor = "pink";
+                        document.getElementById(cardaId).style.backgroundColor = "pink";
+                    }, 2000);
+                }
+            }else{
+                    return;
+                }
+                
+        } 
+      </script>
+    </body>
+</html>
